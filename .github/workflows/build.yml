@@ -25,6 +25,11 @@ on:
         - ""
         default: ""
         required: false
+      build_win_debug:
+        description: 'build debug win dll'
+        type: boolean
+        default: false
+        required: false
       build_android:
         description: 'Build for Android platform'
         type: boolean
@@ -245,7 +250,7 @@ jobs:
       run: |
         cd %GITHUB_WORKSPACE%
         call npm i
-        call .\windows_64.cmd ${{github.event.inputs.v8_revision}} ${{github.event.inputs.wrap_new}}
+        call .\windows_64.cmd ${{github.event.inputs.v8_revision}} ${{github.event.inputs.wrap_new}} ${{github.event.inputs.build_win_debug}}
     - name: Rename
       shell: bash
       run: |
@@ -271,7 +276,7 @@ jobs:
       run: |
         cd %GITHUB_WORKSPACE%
         call npm i
-        call .\windows_64MD.cmd ${{github.event.inputs.v8_revision}} ${{github.event.inputs.wrap_new}}
+        call .\windows_64MD.cmd ${{github.event.inputs.v8_revision}} ${{github.event.inputs.wrap_new}} ${{github.event.inputs.build_win_debug}}
     - name: Rename
       shell: bash
       run: |
@@ -293,7 +298,7 @@ jobs:
       run: |
         cd %GITHUB_WORKSPACE%
         call npm i
-        call .\windows_64MD_DLL_94.cmd ${{github.event.inputs.v8_revision}} ${{github.event.inputs.wrap_new}}
+        call .\windows_64MD_DLL_94.cmd ${{github.event.inputs.v8_revision}} ${{github.event.inputs.wrap_new}} ${{github.event.inputs.build_win_debug}}
     - name: Rename
       shell: bash
       run: |
@@ -319,7 +324,7 @@ jobs:
       run: |
         cd %GITHUB_WORKSPACE%
         call npm i
-        call .\windows_32.cmd ${{github.event.inputs.v8_revision}} ${{github.event.inputs.wrap_new}}
+        call .\windows_32.cmd ${{github.event.inputs.v8_revision}} ${{github.event.inputs.wrap_new}} ${{github.event.inputs.build_win_debug}}
     - name: Rename
       shell: bash
       run: |
