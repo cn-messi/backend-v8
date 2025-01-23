@@ -27,8 +27,11 @@ on:
         required: false
       build_win_debug:
         description: 'build debug win dll'
-        type: boolean
-        default: false
+        type: choice
+        options:
+          - "true"
+          - "false"
+        default: "false"
         required: false
       build_android:
         description: 'Build for Android platform'
