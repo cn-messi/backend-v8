@@ -84,41 +84,59 @@ node %~dp0\node-script\add_arraybuffer_new_without_stl.js . %VERSION% %NEW_WRAP%
 node %~dp0\node-script\patchs.js . %VERSION% %NEW_WRAP%
 
 echo =====[ Building V8 ]=====
+
+:: 设定输出目录，基于DEBUG变量
+if "%DEBUG%"=="true" (
+  set OUTPUT_DIR=out.gn\x64.debug
+) else (
+  set OUTPUT_DIR=out.gn\x64.release
+)
+
+:: 针对不同版本的V8，配置对应的编译参数
 if "%VERSION%"=="11.8.172" (
-    call gn gen out.gn\x64.release -args="target_os=""win"" target_cpu=""x64"" v8_use_external_startup_data=false v8_enable_i18n_support=false is_debug=%DEBUG% %CXX_SETTING% strip_debug_info=%STRIP_DEBUG_INFO% symbol_level=0 v8_enable_pointer_compression=false is_component_build=true v8_enable_sandbox=false v8_enable_maglev=false v8_enable_webassembly=false"
+  call gn gen %OUTPUT_DIR% -args="target_os=""win"" target_cpu=""x64"" v8_use_external_startup_data=false v8_enable_i18n_support=false is_debug=%DEBUG% %CXX_SETTING% strip_debug_info=%STRIP_DEBUG_INFO% symbol_level=0 v8_enable_pointer_compression=false is_component_build=true v8_enable_sandbox=false v8_enable_maglev=false v8_enable_webassembly=false v8_enable_warnings_as_errors=false treat_warnings_as_errors=false"
 )
 
 if "%VERSION%"=="10.6.194" (
-    call gn gen out.gn\x64.release -args="target_os=""win"" target_cpu=""x64"" v8_use_external_startup_data=false v8_enable_i18n_support=false is_debug=%DEBUG% %CXX_SETTING% strip_debug_info=%STRIP_DEBUG_INFO% symbol_level=0 v8_enable_pointer_compression=false is_component_build=true v8_enable_sandbox=false"
+  call gn gen %OUTPUT_DIR% -args="target_os=""win"" target_cpu=""x64"" v8_use_external_startup_data=false v8_enable_i18n_support=false is_debug=%DEBUG% %CXX_SETTING% strip_debug_info=%STRIP_DEBUG_INFO% symbol_level=0 v8_enable_pointer_compression=false is_component_build=true v8_enable_sandbox=false v8_enable_warnings_as_errors=false treat_warnings_as_errors=false"
 )
 
 if "%VERSION%"=="9.4.146.24" (
-    call gn gen out.gn\x64.release -args="target_os=""win"" target_cpu=""x64"" v8_use_external_startup_data=false v8_enable_i18n_support=false is_debug=%DEBUG% %CXX_SETTING% strip_debug_info=%STRIP_DEBUG_INFO% symbol_level=0 v8_enable_pointer_compression=false is_component_build=true"
+  call gn gen %OUTPUT_DIR% -args="target_os=""win"" target_cpu=""x64"" v8_use_external_startup_data=false v8_enable_i18n_support=false is_debug=%DEBUG% %CXX_SETTING% strip_debug_info=%STRIP_DEBUG_INFO% symbol_level=0 v8_enable_pointer_compression=false is_component_build=true v8_enable_warnings_as_errors=false treat_warnings_as_errors=false"
 )
 
-call ninja -C out.gn\x64.release -t clean
+:: 清理之前的编译输出
+call ninja -C %OUTPUT_DIR% -t clean
+
+:: 如果需要使用NEW_WRAP，执行相关操作
 if "%NEW_WRAP%"=="with_new_wrap" (
   copy /Y %~dp0\node-script\win_compile_and_objcopy.js tools
-  node -e "const fs = require('fs'); fs.writeFileSync('out.gn/x64.release/toolchain.ninja', fs.readFileSync('out.gn/x64.release/toolchain.ninja', 'utf-8').replace(/(rule cxx[\s\S]*?command\s*=\s*)(.*clang-cl\.exe.*)/g, '$1node ..\\..\\tools\\win_compile_and_objcopy.js $2'));
+  node -e "const fs = require('fs'); fs.writeFileSync('%OUTPUT_DIR%/toolchain.ninja', fs.readFileSync('%OUTPUT_DIR%/toolchain.ninja', 'utf-8').replace(/(rule cxx[\s\S]*?command\s*=\s*)(.*clang-cl\.exe.*)/g, '$1node ..\\\\..\\\\tools\\\\win_compile_and_objcopy.js $2'));"
 )
-call ninja -v -C out.gn\x64.release v8
 
+:: 开始编译V8
+call ninja -v -C %OUTPUT_DIR% v8
+
+:: 创建输出目录
 md output\v8\Lib\Win64DLL
-copy /Y out.gn\x64.release\v8.dll.lib output\v8\Lib\Win64DLL\
-copy /Y out.gn\x64.release\v8_libplatform.dll.lib output\v8\Lib\Win64DLL\
-copy /Y out.gn\x64.release\v8.dll output\v8\Lib\Win64DLL\
-copy /Y out.gn\x64.release\v8_libbase.dll output\v8\Lib\Win64DLL\
-copy /Y out.gn\x64.release\v8_libplatform.dll output\v8\Lib\Win64DLL\
-copy /Y out.gn\x64.release\v8.dll.pdb output\v8\Lib\Win64DLL\
-copy /Y out.gn\x64.release\v8_libbase.dll.pdb output\v8\Lib\Win64DLL\
-copy /Y out.gn\x64.release\v8_libplatform.dll.pdb output\v8\Lib\Win64DLL\
 
+:: 拷贝编译生成的文件到输出目录
+copy /Y %OUTPUT_DIR%\v8.dll.lib output\v8\Lib\Win64DLL\
+copy /Y %OUTPUT_DIR%\v8_libplatform.dll.lib output\v8\Lib\Win64DLL\
+copy /Y %OUTPUT_DIR%\v8.dll output\v8\Lib\Win64DLL\
+copy /Y %OUTPUT_DIR%\v8_libbase.dll output\v8\Lib\Win64DLL\
+copy /Y %OUTPUT_DIR%\v8_libplatform.dll output\v8\Lib\Win64DLL\
+copy /Y %OUTPUT_DIR%\v8.dll.pdb output\v8\Lib\Win64DLL\
+copy /Y %OUTPUT_DIR%\v8_libbase.dll.pdb output\v8\Lib\Win64DLL\
+copy /Y %OUTPUT_DIR%\v8_libplatform.dll.pdb output\v8\Lib\Win64DLL\
+
+:: 针对不同版本，拷贝相应的第三方库
 if "%VERSION%"=="11.8.172" (
-  copy /Y out.gn\x64.release\third_party_zlib.dll output\v8\Lib\Win64DLL\
-  copy /Y out.gn\x64.release\third_party_zlib.dll.pdb output\v8\Lib\Win64DLL\
-  copy /Y out.gn\x64.release\third_party_abseil-cpp_absl.dll output\v8\Lib\Win64DLL\
-  copy /Y out.gn\x64.release\third_party_abseil-cpp_absl.dll.pdb output\v8\Lib\Win64DLL\
+  copy /Y %OUTPUT_DIR%\third_party_zlib.dll output\v8\Lib\Win64DLL\
+  copy /Y %OUTPUT_DIR%\third_party_zlib.dll.pdb output\v8\Lib\Win64DLL\
+  copy /Y %OUTPUT_DIR%\third_party_abseil-cpp_absl.dll output\v8\Lib\Win64DLL\
+  copy /Y %OUTPUT_DIR%\third_party_abseil-cpp_absl.dll.pdb output\v8\Lib\Win64DLL\
 ) else (
-  copy /Y out.gn\x64.release\zlib.dll output\v8\Lib\Win64DLL\
-  copy /Y out.gn\x64.release\zlib.dll.pdb output\v8\Lib\Win64DLL\
+  copy /Y %OUTPUT_DIR%\zlib.dll output\v8\Lib\Win64DLL\
+  copy /Y %OUTPUT_DIR%\zlib.dll.pdb output\v8\Lib\Win64DLL\
 )

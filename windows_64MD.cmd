@@ -81,23 +81,43 @@ node %~dp0\node-script\add_arraybuffer_new_without_stl.js . %VERSION% %NEW_WRAP%
 node %~dp0\node-script\patchs.js . %VERSION% %NEW_WRAP%
 
 echo =====[ Building V8 ]=====
+
+:: 根据DEBUG变量设置输出目录
+if "%DEBUG%"=="true" (
+    set OUTPUT_DIR=out.gn\x64.debug
+) else (
+    set OUTPUT_DIR=out.gn\x64.release
+)
+
+:: 针对不同版本的V8，配置对应的编译参数
 if "%VERSION%"=="11.8.172" (
-    call gn gen out.gn\x64.release -args="target_os=""win"" target_cpu=""x64"" v8_use_external_startup_data=false v8_enable_i18n_support=false is_debug=%DEBUG% v8_static_library=true %CXX_SETTING% strip_debug_info=%STRIP_DEBUG_INFO% symbol_level=0 v8_enable_pointer_compression=false v8_enable_sandbox=false v8_enable_maglev=false v8_enable_webassembly=false"
+    call gn gen %OUTPUT_DIR% -args="target_os=""win"" target_cpu=""x64"" v8_use_external_startup_data=false v8_enable_i18n_support=false is_debug=%DEBUG% v8_static_library=true %CXX_SETTING% strip_debug_info=%STRIP_DEBUG_INFO% symbol_level=0 v8_enable_pointer_compression=false v8_enable_sandbox=false v8_enable_maglev=false v8_enable_webassembly=false v8_enable_warnings_as_errors=false treat_warnings_as_errors=false"
 )
 
 if "%VERSION%"=="10.6.194" (
-    call gn gen out.gn\x64.release -args="target_os=""win"" target_cpu=""x64"" v8_use_external_startup_data=false v8_enable_i18n_support=false is_debug=%DEBUG% v8_static_library=true %CXX_SETTING% strip_debug_info=%STRIP_DEBUG_INFO% symbol_level=0 v8_enable_pointer_compression=false v8_enable_sandbox=false"
+    call gn gen %OUTPUT_DIR% -args="target_os=""win"" target_cpu=""x64"" v8_use_external_startup_data=false v8_enable_i18n_support=false is_debug=%DEBUG% v8_static_library=true %CXX_SETTING% strip_debug_info=%STRIP_DEBUG_INFO% symbol_level=0 v8_enable_pointer_compression=false v8_enable_sandbox=false v8_enable_warnings_as_errors=false treat_warnings_as_errors=false"
 )
 
 if "%VERSION%"=="9.4.146.24" (
-    call gn gen out.gn\x64.release -args="target_os=""win"" target_cpu=""x64"" v8_use_external_startup_data=false v8_enable_i18n_support=false is_debug=%DEBUG% v8_static_library=true %CXX_SETTING% strip_debug_info=%STRIP_DEBUG_INFO% symbol_level=0 v8_enable_pointer_compression=false"
+    call gn gen %OUTPUT_DIR% -args="target_os=""win"" target_cpu=""x64"" v8_use_external_startup_data=false v8_enable_i18n_support=false is_debug=%DEBUG% v8_static_library=true %CXX_SETTING% strip_debug_info=%STRIP_DEBUG_INFO% symbol_level=0 v8_enable_pointer_compression=false v8_enable_warnings_as_errors=false treat_warnings_as_errors=false"
 )
-call ninja -C out.gn\x64.release -t clean
-call ninja -v -C out.gn\x64.release wee8
 
+:: 清理之前的编译输出
+call ninja -C %OUTPUT_DIR% -t clean
+
+:: 开始编译wee8
+call ninja -v -C %OUTPUT_DIR% wee8
+
+:: 创建输出目录
 md output\v8\Lib\Win64MD
+
+:: 如果需要使用NEW_WRAP，执行相关操作
 if "%NEW_WRAP%"=="with_new_wrap" (
-  call %~dp0\rename_symbols_win.cmd x64 output\v8\Lib\Win64MD\
+    call %~dp0\rename_symbols_win.cmd x64 output\v8\Lib\Win64MD\
 )
-copy /Y out.gn\x64.release\obj\wee8.lib output\v8\Lib\Win64MD\
+
+:: 复制编译生成的库文件到输出目录
+copy /Y %OUTPUT_DIR%\obj\wee8.lib output\v8\Lib\Win64MD\
+
+:: 创建包含Blob的目录
 md output\v8\Inc\Blob\Win64MD
