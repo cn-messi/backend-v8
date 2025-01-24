@@ -17,6 +17,14 @@ on:
         - "11.8.172"
         default: '9.4.146.24'
         required: true
+      build_win_debug:
+          description: 'build debug win dll'
+          type: choice
+          options:
+            - "true"
+            - "false"
+          default: "false"
+          required: false
       wrap_new:
         description: 'wrap new/delete'
         type: choice
@@ -24,14 +32,6 @@ on:
         - "with_new_wrap"
         - ""
         default: ""
-        required: false
-      build_win_debug:
-        description: 'build debug win dll'
-        type: choice
-        options:
-          - "true"
-          - "false"
-        default: "false"
         required: false
       build_android:
         description: 'Build for Android platform'
@@ -253,7 +253,7 @@ jobs:
       run: |
         cd %GITHUB_WORKSPACE%
         call npm i
-        call .\windows_64.cmd ${{github.event.inputs.v8_revision}} ${{github.event.inputs.wrap_new}} ${{github.event.inputs.build_win_debug}}
+        call .\windows_64.cmd ${{github.event.inputs.v8_revision}} ${{github.event.inputs.build_win_debug}} ${{github.event.inputs.wrap_new}}
     - name: Rename
       shell: bash
       run: |
@@ -279,7 +279,7 @@ jobs:
       run: |
         cd %GITHUB_WORKSPACE%
         call npm i
-        call .\windows_64MD.cmd ${{github.event.inputs.v8_revision}} ${{github.event.inputs.wrap_new}} ${{github.event.inputs.build_win_debug}}
+        call .\windows_64MD.cmd ${{github.event.inputs.v8_revision}} ${{github.event.inputs.build_win_debug}} ${{github.event.inputs.wrap_new}}
     - name: Rename
       shell: bash
       run: |
@@ -301,7 +301,7 @@ jobs:
       run: |
         cd %GITHUB_WORKSPACE%
         call npm i
-        call .\windows_64MD_DLL_94.cmd ${{github.event.inputs.v8_revision}} ${{github.event.inputs.wrap_new}} ${{github.event.inputs.build_win_debug}}
+        call .\windows_64MD_DLL_94.cmd ${{github.event.inputs.v8_revision}} ${{github.event.inputs.build_win_debug}} ${{github.event.inputs.wrap_new}}
     - name: Rename
       shell: bash
       run: |
@@ -327,7 +327,7 @@ jobs:
       run: |
         cd %GITHUB_WORKSPACE%
         call npm i
-        call .\windows_32.cmd ${{github.event.inputs.v8_revision}} ${{github.event.inputs.wrap_new}} ${{github.event.inputs.build_win_debug}}
+        call .\windows_32.cmd ${{github.event.inputs.v8_revision}} ${{github.event.inputs.build_win_debug}} ${{github.event.inputs.wrap_new}}
     - name: Rename
       shell: bash
       run: |

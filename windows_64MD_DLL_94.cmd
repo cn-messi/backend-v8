@@ -1,5 +1,6 @@
 set VERSION=%1
-set NEW_WRAP=%2
+set DEBUG=%2
+set NEW_WRAP=%3
 if "%DEBUG%" == "true" (
     set STRIP_DEBUG_INFO=false
 ) else (
